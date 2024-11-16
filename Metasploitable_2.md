@@ -1,9 +1,11 @@
 # Metasploitable 2
 
-## Nmap 
+## Enumeration
+Discover the machine using `netdiscover -r <Network>/24`
+### Nmap 
 ```
 PORT      STATE SERVICE
-21/tcp    open  ftp
+21/tcp    open  ftp      vsftpd 2.3.4
 22/tcp    open  ssh
 23/tcp    open  telnet
 25/tcp    open  smtp
@@ -68,3 +70,36 @@ Since port 111 rpcbind is exposed, we can use `rpcinfo` to enumerate all rpc-bas
 ```
 Let's run `showmount -e 192.168.65.133` to see what can be exported through nfs. `/*` comes back out, so it means everyone can mount root to there computer and use the machine.
 
+### Port 21
+Double check what's running on the port & version using `telnet <IP> 21`
+
+`search vsftp` in `vfsconfig`
+
+Set options and Run the exploit. Now we can `cat /etc/shadow` and crack the hashes offline
+
+### Telnet (Capture telnet traffic and catch people in 4k)
+
+Lets attack Telnet and show that data is all sent in clear text. 
+
+First lets turn on wireshark and start a capture. If we then run `telnet <IP>` it comes back with a log in, and after we log in, we can stop the capture and click on any telnet packet. 
+Go to follow stream
+
+![telnet](Telnet.png)
+
+Now, lets try to use SSH instead, type `SSH msfadmin@192.168.65.133` and log in with the same password. Below is a what wireshark can see
+
+![SSH](SSH.png)
+
+### Samba 
+
+A service that is for remote compilation of code. like rendering farm or remote computation. It is designed for C and C++, therefore our payload has to be in C or C++.
+Lets do a port scan with nmap `nmap -sV -p 3632 192.168.65.133`
+
+```
+PORT     STATE SERVICE VERSION
+3632/tcp open  distccd distccd v1 ((GNU) 4.2.4 (Ubuntu 4.2.4-1ubuntu4))
+```
+
+Lets see if metasploit got a module for it. `msfconsole` and `search distccd`
+
+### SAMBA
